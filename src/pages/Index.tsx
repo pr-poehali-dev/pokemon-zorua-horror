@@ -1,343 +1,455 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
-interface GameState {
-  chapter: number;
-  choices: string[];
-  ending: string | null;
+interface GameObject {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  description: string;
+  action?: string;
+  clickable: boolean;
+  revealed?: boolean;
+}
+
+interface InventoryItem {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
+  background: string;
+  objects: GameObject[];
+  description: string;
+  ambiance: string;
 }
 
 const Index = () => {
-  const [gameState, setGameState] = useState<GameState>({
-    chapter: 0,
-    choices: [],
-    ending: null
-  });
-  
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<string>('room');
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [gameLog, setGameLog] = useState<string[]>(['Ты просыпаешься в тёмной комнате замка...']);
+  const [discoveredObjects, setDiscoveredObjects] = useState<Set<string>>(new Set());
+  const [zoruaPosition, setZoruaPosition] = useState({ x: 20, y: 60 });
+  const [showInventory, setShowInventory] = useState(false);
 
-  const chapters = [
-    {
-      title: "Начало",
-      text: "Дождь барабанит по крыше заброшенного замка. N стоит у окна, наблюдая за грозой. Рядом с ним маленькая Zorua дрожит от холода. Её красные глаза светятся в темноте.",
-      image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Погладить Zorua", next: 1 },
-        { text: "Выглянуть в окно", next: 2 }
+  const locations: Record<string, Location> = {
+    room: {
+      id: 'room',
+      name: 'Комната N',
+      background: 'linear-gradient(180deg, #1a1520 0%, #2d2438 100%)',
+      description: 'Тёмная комната с видом на грозу. Дождь барабанит по окнам.',
+      ambiance: 'Слышен стук дождя и раскаты грома',
+      objects: [
+        {
+          id: 'window',
+          name: 'Окно',
+          x: 70,
+          y: 15,
+          width: 20,
+          height: 30,
+          description: 'За окном только тьма и молнии',
+          clickable: true,
+          action: 'examine'
+        },
+        {
+          id: 'table',
+          name: 'Стол',
+          x: 15,
+          y: 70,
+          width: 15,
+          height: 12,
+          description: 'Старый деревянный стол',
+          clickable: true,
+          action: 'examine'
+        },
+        {
+          id: 'diary',
+          name: 'Дневник',
+          x: 18,
+          y: 68,
+          width: 8,
+          height: 6,
+          description: 'Потрёпанный дневник с записями',
+          clickable: true,
+          action: 'take',
+          revealed: false
+        },
+        {
+          id: 'door',
+          name: 'Дверь',
+          x: 85,
+          y: 30,
+          width: 12,
+          height: 35,
+          description: 'Массивная дверь ведёт в коридор',
+          clickable: true,
+          action: 'use'
+        }
       ]
     },
-    {
-      title: "Тепло",
-      text: "N протягивает руку к Zorua. Покемон вздрагивает, но не убегает. В момент касания, воздух наполняется странным шёпотом. Zorua начинает меняться... но это не эволюция. Что-то не так.",
-      image: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Отдёрнуть руку", next: 3 },
-        { text: "Продолжить гладить", next: 4 }
+    corridor: {
+      id: 'corridor',
+      name: 'Коридор',
+      background: 'linear-gradient(180deg, #0f0a15 0%, #1a1520 100%)',
+      description: 'Бесконечный коридор замка. Факелы мерцают на стенах.',
+      ambiance: 'Эхо твоих шагов отдаётся в темноте',
+      objects: [
+        {
+          id: 'portrait',
+          name: 'Портрет',
+          x: 25,
+          y: 20,
+          width: 15,
+          height: 25,
+          description: 'Старый портрет. Глаза на картине следят за тобой.',
+          clickable: true,
+          action: 'examine'
+        },
+        {
+          id: 'key',
+          name: 'Ключ',
+          x: 60,
+          y: 75,
+          width: 5,
+          height: 5,
+          description: 'Ржавый ключ лежит на полу',
+          clickable: true,
+          action: 'take',
+          revealed: false
+        },
+        {
+          id: 'locked_door',
+          name: 'Запертая дверь',
+          x: 75,
+          y: 25,
+          width: 18,
+          height: 40,
+          description: 'Дверь заперта. Нужен ключ.',
+          clickable: true,
+          action: 'use'
+        },
+        {
+          id: 'back_door',
+          name: 'Назад',
+          x: 5,
+          y: 30,
+          width: 10,
+          height: 35,
+          description: 'Вернуться в комнату',
+          clickable: true,
+          action: 'use'
+        }
       ]
     },
-    {
-      title: "Тьма за окном",
-      text: "За окном только тьма. Нет деревьев, нет неба, нет земли. Только бесконечная пустота, которая смотрит в ответ. Zorua тихо скулит и прячется за N.",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Отойти от окна", next: 1 },
-        { text: "Продолжить смотреть", next: 5 }
-      ]
-    },
-    {
-      title: "Момент истины",
-      text: "N резко отдёргивает руку. Zorua издаёт душераздирающий крик. Её тело начинает растворяться, превращаясь в чёрный дым. 'Почему ты меня бросил?' - эхом раздаётся в голове N.",
-      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Попытаться схватить её", next: 6 },
-        { text: "Отступить назад", next: 7 }
-      ]
-    },
-    {
-      title: "Связь",
-      text: "N продолжает гладить Zorua. Шёпот становится громче. Теперь это голоса. Сотни голосов покемонов, которые страдали. Zorua смотрит на N своими красными глазами, и он понимает - она чувствует всю боль мира.",
-      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Принять боль вместе", next: 8 },
-        { text: "Попытаться разорвать связь", next: 7 }
-      ]
-    },
-    {
-      title: "Бездна",
-      text: "Пустота начинает затягивать N. Он чувствует, как его сознание растворяется. Zorua пытается его удержать, но её маленькие лапы скользят по полу. Последнее, что видит N - как Zorua падает вместе с ним в бездну.",
-      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Начать заново", next: 0, ending: "bad" }
-      ]
-    },
-    {
-      title: "Иллюзия",
-      text: "N успевает схватить дым. В его руках материализуется... но это не Zorua. Это что-то древнее, что только притворялось покемоном. 'Спасибо за освобождение' - говорит оно, прежде чем исчезнуть навсегда.",
-      image: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Начать заново", next: 0, ending: "twist" }
-      ]
-    },
-    {
-      title: "Одиночество",
-      text: "N отступает. Zorua исчезает в тенях. Он остаётся один в пустом замке. Навсегда. Иногда он слышит скуление в темноте, но когда оборачивается - там никого нет.",
-      image: "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Начать заново", next: 0, ending: "lonely" }
-      ]
-    },
-    {
-      title: "Единство",
-      text: "N обнимает Zorua, принимая всю боль. Голоса стихают. В тишине они понимают друг друга. Zorua превращается в чистый свет, окутывая N. Они больше не два существа - они стали чем-то большим. Замок рушится, но им это уже не важно.",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
-      choices: [
-        { text: "Начать заново", next: 0, ending: "unity" }
+    throne: {
+      id: 'throne',
+      name: 'Тронный зал',
+      background: 'linear-gradient(180deg, #2d1f3d 0%, #1a0f2e 100%)',
+      description: 'Огромный зал с пустым троном. Здесь что-то не так...',
+      ambiance: 'Тишина давит на уши. Воздух тяжёлый.',
+      objects: [
+        {
+          id: 'throne',
+          name: 'Трон',
+          x: 40,
+          y: 35,
+          width: 20,
+          height: 30,
+          description: 'Пустой трон Team Plasma. На нём лежит что-то...',
+          clickable: true,
+          action: 'examine'
+        },
+        {
+          id: 'crystal',
+          name: 'Кристалл',
+          x: 48,
+          y: 42,
+          width: 4,
+          height: 6,
+          description: 'Тёмный кристалл пульсирует',
+          clickable: true,
+          action: 'take',
+          revealed: false
+        }
       ]
     }
-  ];
-
-  useEffect(() => {
-    setIsTransitioning(true);
-    setImageLoaded(false);
-    const timer = setTimeout(() => setIsTransitioning(false), 300);
-    return () => clearTimeout(timer);
-  }, [gameState.chapter]);
-
-  const handleChoice = (nextChapter: number, ending?: string) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      if (ending) {
-        setGameState({
-          ...gameState,
-          chapter: nextChapter,
-          ending: ending
-        });
-      } else {
-        setGameState({
-          ...gameState,
-          chapter: nextChapter,
-          choices: [...gameState.choices, chapters[gameState.chapter].title]
-        });
-      }
-    }, 300);
   };
 
-  const currentChapter = chapters[gameState.chapter];
+  const addLog = (message: string) => {
+    setGameLog(prev => [...prev.slice(-4), message]);
+  };
+
+  const handleObjectClick = (obj: GameObject) => {
+    if (!obj.clickable) return;
+
+    const location = locations[currentLocation];
+
+    if (obj.action === 'examine') {
+      if (obj.id === 'window') {
+        addLog('За окном абсолютная тьма. Нет ни звёзд, ни земли. Только пустота.');
+      } else if (obj.id === 'table') {
+        addLog('На столе лежит потрёпанный дневник.');
+        setDiscoveredObjects(prev => new Set([...prev, 'diary']));
+      } else if (obj.id === 'portrait') {
+        addLog('Портрет изображает древнего короля. Его глаза... они движутся.');
+        setDiscoveredObjects(prev => new Set([...prev, 'key']));
+      } else if (obj.id === 'throne') {
+        addLog('На троне лежит странный кристалл. Он притягивает взгляд.');
+        setDiscoveredObjects(prev => new Set([...prev, 'crystal']));
+      } else {
+        addLog(obj.description);
+      }
+    } else if (obj.action === 'take') {
+      if (obj.id === 'diary') {
+        addLog('Ты взял дневник. В нём записи о страданиях покемонов.');
+        setInventory(prev => [...prev, {
+          id: 'diary',
+          name: 'Дневник N',
+          description: 'Исписанный дневник с мрачными мыслями',
+          icon: 'BookOpen'
+        }]);
+      } else if (obj.id === 'key') {
+        addLog('Ты поднял ржавый ключ. Он холодный, как лёд.');
+        setInventory(prev => [...prev, {
+          id: 'key',
+          name: 'Ржавый ключ',
+          description: 'Старый ключ от неизвестной двери',
+          icon: 'Key'
+        }]);
+      } else if (obj.id === 'crystal') {
+        addLog('Кристалл обжигает руку, но ты забираешь его.');
+        setInventory(prev => [...prev, {
+          id: 'crystal',
+          name: 'Тёмный кристалл',
+          description: 'Пульсирующий кристалл тёмной энергии',
+          icon: 'Gem'
+        }]);
+      }
+    } else if (obj.action === 'use') {
+      if (obj.id === 'door') {
+        addLog('Ты открываешь дверь в коридор.');
+        setCurrentLocation('corridor');
+      } else if (obj.id === 'back_door') {
+        addLog('Ты возвращаешься в комнату.');
+        setCurrentLocation('room');
+      } else if (obj.id === 'locked_door') {
+        if (inventory.find(item => item.id === 'key')) {
+          addLog('Ключ подходит! Дверь открывается со скрипом.');
+          setCurrentLocation('throne');
+        } else {
+          addLog('Дверь заперта. Нужен ключ.');
+        }
+      }
+    }
+  };
+
+  const handleZoruaClick = () => {
+    const messages = [
+      'Zorua смотрит на тебя своими красными глазами.',
+      'Она скулит, будто пытается что-то сказать.',
+      'Zorua дрожит. Ей страшно.',
+      'Ты гладишь Zorua. Она немного успокаивается.'
+    ];
+    addLog(messages[Math.floor(Math.random() * messages.length)]);
+  };
+
+  const currentLoc = locations[currentLocation];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        <header className="text-center mb-8 animate-fade-in">
-          <h1 className="text-5xl md:text-7xl text-primary mb-4 glitch font-bold">
-            N & Zorua
+    <div className="min-h-screen bg-background text-foreground p-4">
+      <div className="max-w-7xl mx-auto">
+        <header className="text-center mb-4 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl text-primary mb-2 font-bold glitch">
+            N & Zorua: Замок иллюзий
           </h1>
-          <p className="text-muted-foreground text-lg flicker">
-            История о тьме, одиночестве и последнем выборе
+          <p className="text-muted-foreground flicker text-sm">
+            {currentLoc.ambiance}
           </p>
         </header>
 
-        <Tabs defaultValue="game" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="game" className="text-lg">
-              <Icon name="Gamepad2" size={20} className="mr-2" />
-              Игра
-            </TabsTrigger>
-            <TabsTrigger value="story" className="text-lg">
-              <Icon name="BookOpen" size={20} className="mr-2" />
-              История
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-3">
+            <Card className="relative overflow-hidden border-primary/30 shadow-2xl" 
+                  style={{ background: currentLoc.background, minHeight: '500px' }}>
+              <div className="absolute top-4 left-4 bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm">
+                <h2 className="text-xl font-bold text-white">{currentLoc.name}</h2>
+                <p className="text-sm text-gray-300">{currentLoc.description}</p>
+              </div>
 
-          <TabsContent value="game">
-            <div className={`transition-all duration-500 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-              <Card className="overflow-hidden border-primary/30 shadow-2xl backdrop-blur-sm bg-card/95">
-                <div className="relative h-80 md:h-96 overflow-hidden">
-                  <div 
-                    className={`absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent z-10 transition-opacity duration-700 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                  />
+              <div className="absolute inset-0" style={{ cursor: 'crosshair' }}>
+                {currentLoc.objects.map(obj => {
+                  const isVisible = !obj.revealed || discoveredObjects.has(obj.id);
+                  if (!isVisible) return null;
+
+                  return (
+                    <div
+                      key={obj.id}
+                      onClick={() => handleObjectClick(obj)}
+                      className="absolute transition-all hover:scale-110 hover:brightness-125 cursor-pointer"
+                      style={{
+                        left: `${obj.x}%`,
+                        top: `${obj.y}%`,
+                        width: `${obj.width}%`,
+                        height: `${obj.height}%`,
+                        border: '2px solid rgba(234, 56, 76, 0.3)',
+                        borderRadius: '8px',
+                        background: 'rgba(234, 56, 76, 0.1)',
+                        backdropFilter: 'blur(2px)'
+                      }}
+                      title={obj.name}
+                    />
+                  );
+                })}
+
+                <div
+                  className="absolute transition-all duration-500 cursor-pointer hover:scale-110"
+                  style={{
+                    left: `${zoruaPosition.x}%`,
+                    top: `${zoruaPosition.y}%`,
+                    width: '80px',
+                    height: '80px'
+                  }}
+                  onClick={handleZoruaClick}
+                >
                   <img 
-                    src={currentChapter.image}
-                    alt={currentChapter.title}
-                    className={`w-full h-full object-cover transition-all duration-1000 ${imageLoaded ? 'scale-100 opacity-100' : 'scale-110 opacity-0'}`}
-                    onLoad={() => setImageLoaded(true)}
-                    style={{ filter: 'brightness(0.7) contrast(1.1)' }}
+                    src="https://cdn.poehali.dev/files/eb7a2be1-38d5-4439-a7e2-fcae72fa531a.png"
+                    alt="Zorua"
+                    className="w-full h-full object-contain drop-shadow-lg animate-pulse"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
-                    <h2 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">
-                      {currentChapter.title}
-                    </h2>
-                  </div>
                 </div>
+              </div>
 
-                <div className="p-6 md:p-8">
-                  <p className="text-lg md:text-xl leading-relaxed mb-6 text-foreground/90">
-                    {currentChapter.text}
-                  </p>
+              <div className="absolute bottom-4 right-4">
+                <img 
+                  src="https://cdn.poehali.dev/files/76cb79cf-1086-4e14-af67-74ce1e2d2339.png"
+                  alt="N"
+                  className="w-32 h-auto drop-shadow-2xl opacity-80"
+                />
+              </div>
+            </Card>
 
-                  {gameState.ending && (
-                    <div className="mb-6 p-4 bg-accent/20 border-2 border-accent rounded-lg animate-fade-in shake">
-                      <div className="flex items-center space-x-3">
-                        <Icon name="Sparkles" size={24} className="text-accent" />
-                        <p className="text-accent font-bold text-lg">
-                          Концовка: {
-                            gameState.ending === 'bad' ? 'Падение в бездну' :
-                            gameState.ending === 'twist' ? 'Освобождение' :
-                            gameState.ending === 'lonely' ? 'Вечное одиночество' :
-                            'Единство душ'
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    {currentChapter.choices.map((choice, index) => (
-                      <Button
-                        key={index}
-                        onClick={() => handleChoice(choice.next, choice.ending)}
-                        className="w-full justify-start text-left h-auto py-4 px-6 text-base md:text-lg font-medium hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg"
-                        variant={choice.ending ? "destructive" : "default"}
-                        style={{
-                          animationDelay: `${index * 100}ms`
-                        }}
+            <Card className="mt-4 p-4 border-accent/30 bg-card/80 backdrop-blur-sm">
+              <div className="flex items-start space-x-2 mb-2">
+                <Icon name="MessageSquare" size={20} className="text-accent mt-1 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-accent mb-2">Действия</h3>
+                  <div className="space-y-1">
+                    {gameLog.map((log, index) => (
+                      <p 
+                        key={index} 
+                        className="text-sm text-foreground/80 animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
                       >
-                        <Icon 
-                          name={choice.ending ? "RotateCcw" : "ChevronRight"} 
-                          size={20} 
-                          className="mr-3 flex-shrink-0" 
-                        />
-                        <span>{choice.text}</span>
-                      </Button>
+                        › {log}
+                      </p>
                     ))}
                   </div>
+                </div>
+              </div>
+            </Card>
+          </div>
 
-                  {gameState.choices.length > 0 && (
-                    <div className="mt-8 pt-6 border-t border-border/50">
-                      <div className="flex items-center space-x-2 mb-3">
-                        <Icon name="Route" size={18} className="text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground font-medium">
-                          Пройденный путь:
-                        </p>
+          <div className="space-y-4">
+            <Card className="p-4 border-secondary/30 bg-card/95 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-secondary flex items-center">
+                  <Icon name="Backpack" size={20} className="mr-2" />
+                  Инвентарь
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowInventory(!showInventory)}
+                >
+                  <Icon name={showInventory ? "ChevronUp" : "ChevronDown"} size={18} />
+                </Button>
+              </div>
+
+              {showInventory && (
+                <div className="space-y-2 animate-fade-in">
+                  {inventory.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">Пусто</p>
+                  ) : (
+                    inventory.map(item => (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedItem(item.id === selectedItem ? null : item.id)}
+                        className={`p-3 rounded-lg border cursor-pointer transition-all hover:scale-105 ${
+                          selectedItem === item.id
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border bg-secondary/20'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Icon name={item.icon as any} size={24} className="text-primary" />
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.description}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {gameState.choices.map((choice, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1.5 bg-secondary/80 text-secondary-foreground rounded-full text-xs font-medium border border-secondary-foreground/20 animate-fade-in"
-                            style={{ animationDelay: `${index * 50}ms` }}
-                          >
-                            {choice}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
+                    ))
                   )}
                 </div>
-              </Card>
-            </div>
-          </TabsContent>
+              )}
+            </Card>
 
-          <TabsContent value="story" className="animate-fade-in">
-            <div className="space-y-6">
-              <Card className="p-6 md:p-8 border-primary/30 shadow-2xl backdrop-blur-sm bg-card/95">
-                <div className="mb-6">
-                  <div className="relative overflow-hidden rounded-lg mb-6 group">
-                    <img 
-                      src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=600&fit=crop"
-                      alt="N and Zorua"
-                      className="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-105"
-                      style={{ filter: 'brightness(0.8) contrast(1.1)' }}
-                    />
-                  </div>
-                  <h2 className="text-3xl md:text-4xl mb-4 text-accent font-bold">
-                    Предыстория
-                  </h2>
+            <Card className="p-4 border-destructive/30 bg-card/95 backdrop-blur-sm">
+              <h3 className="text-lg font-bold text-destructive mb-3 flex items-center">
+                <Icon name="Map" size={20} className="mr-2" />
+                Управление
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start space-x-2">
+                  <Icon name="MousePointer" size={16} className="text-primary mt-0.5" />
+                  <span>Нажимай на объекты для взаимодействия</span>
                 </div>
-
-                <div className="space-y-6 text-base md:text-lg leading-relaxed">
-                  <div className="animate-fade-in">
-                    <h3 className="text-2xl md:text-3xl text-primary mb-4 flex items-center font-bold">
-                      <Icon name="User" size={28} className="mr-3" />
-                      N - Король без королевства
-                    </h3>
-                    <p className="mb-3">
-                      Когда-то N верил, что может изменить мир. Он слышал голоса покемонов, 
-                      чувствовал их боль, понимал их желания. Но чем больше он слушал, 
-                      тем больше осознавал ужасную правду.
-                    </p>
-                    <p className="mb-3">
-                      Покемоны страдают. Всегда страдали. И всегда будут страдать. 
-                      Мир построен на их эксплуатации, и изменить это невозможно.
-                    </p>
-                    <p className="text-muted-foreground">
-                      После поражения от тренеров, N ушёл. Не в путешествие, не на поиски истины. 
-                      Он просто... исчез. Замок Team Plasma стал его тюрьмой, где он медленно 
-                      терял рассудок, слушая эхо чужой боли.
-                    </p>
-                  </div>
-
-                  <div className="border-t border-border/50 pt-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
-                    <h3 className="text-2xl md:text-3xl text-primary mb-4 flex items-center font-bold">
-                      <Icon name="Ghost" size={28} className="mr-3" />
-                      Zorua - Иллюзия или реальность?
-                    </h3>
-                    <p className="mb-3">
-                      Маленькая Zorua появилась в замке однажды ночью. N не знал откуда. 
-                      Она была ранена, напугана, одинока. Он взял её к себе, пытаясь 
-                      защитить хотя бы одного покемона.
-                    </p>
-                    <p className="mb-3">
-                      Но Zorua - мастер иллюзий. И чем дольше она оставалась с N, 
-                      тем более странными становились её иллюзии. Замок менялся. 
-                      Время текло неправильно. Реальность трескалась по швам.
-                    </p>
-                    <p className="text-muted-foreground">
-                      N начал подозревать: а что если Zorua не настоящая? Что если это 
-                      последняя иллюзия его разума, цепляющегося за надежду? Или что-то 
-                      более зловещее - древняя сущность, принявшая облик покемона?
-                    </p>
-                  </div>
-
-                  <div className="border-t border-border/50 pt-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
-                    <h3 className="text-2xl md:text-3xl text-primary mb-4 flex items-center font-bold">
-                      <Icon name="Castle" size={28} className="mr-3" />
-                      Замок вне времени
-                    </h3>
-                    <p className="mb-3">
-                      Замок Team Plasma больше не существует в обычном мире. 
-                      Он застрял между реальностью и иллюзией, между прошлым и настоящим.
-                    </p>
-                    <p className="text-destructive font-medium">
-                      Здесь N и Zorua обречены проживать один и тот же кошмар снова и снова, 
-                      делая выбор, который определит их судьбу. Но каждый выбор ведёт только 
-                      к новому витку страданий.
-                    </p>
-                  </div>
+                <div className="flex items-start space-x-2">
+                  <Icon name="Eye" size={16} className="text-accent mt-0.5" />
+                  <span>Исследуй локации внимательно</span>
                 </div>
-              </Card>
-
-              <Card className="p-6 bg-destructive/10 border-2 border-destructive/40 backdrop-blur-sm animate-fade-in" style={{ animationDelay: '600ms' }}>
-                <div className="flex items-start space-x-4">
-                  <Icon name="TriangleAlert" size={32} className="text-destructive flex-shrink-0 mt-1 animate-pulse" />
-                  <div>
-                    <h4 className="text-xl md:text-2xl font-bold mb-3 text-destructive">
-                      Предупреждение
-                    </h4>
-                    <p className="text-sm md:text-base leading-relaxed">
-                      Эта история содержит тёмные темы: одиночество, потеря надежды, 
-                      психологический хоррор. Некоторые концовки могут быть тревожными. 
-                      Игра исследует тёмную сторону вселенной Pokemon через призму отчаяния и безысходности.
-                    </p>
-                  </div>
+                <div className="flex items-start space-x-2">
+                  <Icon name="Package" size={16} className="text-secondary mt-0.5" />
+                  <span>Используй предметы из инвентаря</span>
                 </div>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+                <div className="flex items-start space-x-2">
+                  <Icon name="Ghost" size={16} className="text-destructive mt-0.5" />
+                  <span>Общайся с Zorua</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4 border-accent/20 bg-gradient-to-br from-accent/5 to-primary/5 backdrop-blur-sm">
+              <div className="flex items-center space-x-2 mb-2">
+                <Icon name="Info" size={18} className="text-accent" />
+                <h3 className="text-sm font-bold text-accent">Статус</h3>
+              </div>
+              <div className="space-y-1 text-xs">
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">Локация:</span>
+                  <span className="text-foreground font-medium">{currentLoc.name}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">Предметов:</span>
+                  <span className="text-foreground font-medium">{inventory.length}/10</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-muted-foreground">Найдено:</span>
+                  <span className="text-foreground font-medium">{discoveredObjects.size} объектов</span>
+                </p>
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
