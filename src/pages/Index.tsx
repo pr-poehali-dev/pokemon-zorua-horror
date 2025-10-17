@@ -24,7 +24,7 @@ const Index = () => {
     {
       title: "Начало",
       text: "Дождь барабанит по крыше заброшенного замка. N стоит у окна, наблюдая за грозой. Рядом с ним маленькая Zorua дрожит от холода. Её красные глаза светятся в темноте.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/1d59bde0-a927-4954-9ef5-9859c1ae34ec.jpg",
+      image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=600&fit=crop",
       choices: [
         { text: "Погладить Zorua", next: 1 },
         { text: "Выглянуть в окно", next: 2 }
@@ -33,7 +33,7 @@ const Index = () => {
     {
       title: "Тепло",
       text: "N протягивает руку к Zorua. Покемон вздрагивает, но не убегает. В момент касания, воздух наполняется странным шёпотом. Zorua начинает меняться... но это не эволюция. Что-то не так.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/1fa975f0-aac9-4400-b2b5-c45522b4a062.jpg",
+      image: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=800&h=600&fit=crop",
       choices: [
         { text: "Отдёрнуть руку", next: 3 },
         { text: "Продолжить гладить", next: 4 }
@@ -42,7 +42,7 @@ const Index = () => {
     {
       title: "Тьма за окном",
       text: "За окном только тьма. Нет деревьев, нет неба, нет земли. Только бесконечная пустота, которая смотрит в ответ. Zorua тихо скулит и прячется за N.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/094ca49d-7555-4d4a-9040-515fd44f42a3.jpg",
+      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
       choices: [
         { text: "Отойти от окна", next: 1 },
         { text: "Продолжить смотреть", next: 5 }
@@ -51,7 +51,7 @@ const Index = () => {
     {
       title: "Момент истины",
       text: "N резко отдёргивает руку. Zorua издаёт душераздирающий крик. Её тело начинает растворяться, превращаясь в чёрный дым. 'Почему ты меня бросил?' - эхом раздаётся в голове N.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/cfd0fa05-eeae-48f2-8044-9ceb46984c66.jpg",
+      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop",
       choices: [
         { text: "Попытаться схватить её", next: 6 },
         { text: "Отступить назад", next: 7 }
@@ -60,7 +60,7 @@ const Index = () => {
     {
       title: "Связь",
       text: "N продолжает гладить Zorua. Шёпот становится громче. Теперь это голоса. Сотни голосов покемонов, которые страдали. Zorua смотрит на N своими красными глазами, и он понимает - она чувствует всю боль мира.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/b74e906c-5ef0-4907-b297-90efd7006f72.jpg",
+      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&h=600&fit=crop",
       choices: [
         { text: "Принять боль вместе", next: 8 },
         { text: "Попытаться разорвать связь", next: 7 }
@@ -69,7 +69,7 @@ const Index = () => {
     {
       title: "Бездна",
       text: "Пустота начинает затягивать N. Он чувствует, как его сознание растворяется. Zorua пытается его удержать, но её маленькие лапы скользят по полу. Последнее, что видит N - как Zorua падает вместе с ним в бездну.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/529781c4-6ca1-4b25-bf83-7a51835c86b6.jpg",
+      image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop",
       choices: [
         { text: "Начать заново", next: 0, ending: "bad" }
       ]
@@ -77,7 +77,7 @@ const Index = () => {
     {
       title: "Иллюзия",
       text: "N успевает схватить дым. В его руках материализуется... но это не Zorua. Это что-то древнее, что только притворялось покемоном. 'Спасибо за освобождение' - говорит оно, прежде чем исчезнуть навсегда.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/14a3a786-d168-4436-bf3a-b6bd59ea414a.jpg",
+      image: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&h=600&fit=crop",
       choices: [
         { text: "Начать заново", next: 0, ending: "twist" }
       ]
@@ -85,7 +85,7 @@ const Index = () => {
     {
       title: "Одиночество",
       text: "N отступает. Zorua исчезает в тенях. Он остаётся один в пустом замке. Навсегда. Иногда он слышит скуление в темноте, но когда оборачивается - там никого нет.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/10d37e5d-666c-490e-9b98-a967e73072ba.jpg",
+      image: "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?w=800&h=600&fit=crop",
       choices: [
         { text: "Начать заново", next: 0, ending: "lonely" }
       ]
@@ -93,7 +93,7 @@ const Index = () => {
     {
       title: "Единство",
       text: "N обнимает Zorua, принимая всю боль. Голоса стихают. В тишине они понимают друг друга. Zorua превращается в чистый свет, окутывая N. Они больше не два существа - они стали чем-то большим. Замок рушится, но им это уже не важно.",
-      image: "https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/ee0a8a68-0396-4df1-8d7d-7ce5575182c3.jpg",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop",
       choices: [
         { text: "Начать заново", next: 0, ending: "unity" }
       ]
@@ -247,7 +247,7 @@ const Index = () => {
                 <div className="mb-6">
                   <div className="relative overflow-hidden rounded-lg mb-6 group">
                     <img 
-                      src="https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/e2cf9e6c-ef07-4219-bab0-a87e45bc7e51.jpg"
+                      src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=600&fit=crop"
                       alt="N and Zorua"
                       className="w-full h-72 object-cover transition-transform duration-700 group-hover:scale-105"
                       style={{ filter: 'brightness(0.8) contrast(1.1)' }}
