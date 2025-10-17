@@ -45,7 +45,7 @@ const Index = () => {
     room: {
       id: 'room',
       name: 'Комната N',
-      background: 'linear-gradient(180deg, #1a1520 0%, #2d2438 100%)',
+      background: 'https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/131b4596-51a2-4f7f-a5d8-bc158764b371.jpg',
       description: 'Тёмная комната с видом на грозу. Дождь барабанит по окнам.',
       ambiance: 'Слышен стук дождя и раскаты грома',
       objects: [
@@ -99,7 +99,7 @@ const Index = () => {
     corridor: {
       id: 'corridor',
       name: 'Коридор',
-      background: 'linear-gradient(180deg, #0f0a15 0%, #1a1520 100%)',
+      background: 'https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/154f5d88-142a-4587-9173-573f52d50689.jpg',
       description: 'Бесконечный коридор замка. Факелы мерцают на стенах.',
       ambiance: 'Эхо твоих шагов отдаётся в темноте',
       objects: [
@@ -153,7 +153,7 @@ const Index = () => {
     throne: {
       id: 'throne',
       name: 'Тронный зал',
-      background: 'linear-gradient(180deg, #2d1f3d 0%, #1a0f2e 100%)',
+      background: 'https://cdn.poehali.dev/projects/9ac703f6-e355-49a0-98af-9b250bdce758/files/03167512-81f5-47b5-9d29-05ca34340c17.jpg',
       description: 'Огромный зал с пустым троном. Здесь что-то не так...',
       ambiance: 'Тишина давит на уши. Воздух тяжёлый.',
       objects: [
@@ -279,7 +279,12 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
             <Card className="relative overflow-hidden border-primary/30 shadow-2xl" 
-                  style={{ background: currentLoc.background, minHeight: '500px' }}>
+                  style={{ 
+                    backgroundImage: `url(${currentLoc.background})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    minHeight: '600px'
+                  }}>
               <div className="absolute top-4 left-4 bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm">
                 <h2 className="text-xl font-bold text-white">{currentLoc.name}</h2>
                 <p className="text-sm text-gray-300">{currentLoc.description}</p>
@@ -300,10 +305,11 @@ const Index = () => {
                         top: `${obj.y}%`,
                         width: `${obj.width}%`,
                         height: `${obj.height}%`,
-                        border: '2px solid rgba(234, 56, 76, 0.3)',
+                        border: '2px solid rgba(234, 56, 76, 0.5)',
                         borderRadius: '8px',
-                        background: 'rgba(234, 56, 76, 0.1)',
-                        backdropFilter: 'blur(2px)'
+                        background: 'rgba(234, 56, 76, 0.2)',
+                        backdropFilter: 'blur(1px)',
+                        boxShadow: '0 0 10px rgba(234, 56, 76, 0.4)'
                       }}
                       title={obj.name}
                     />
