@@ -209,7 +209,7 @@ const Index = () => {
         addLog(obj.description);
       }
     } else if (obj.action === 'take') {
-      if (obj.id === 'diary') {
+      if (obj.id === 'diary' && !inventory.find(item => item.id === 'diary')) {
         addLog('Ты взял дневник. В нём записи о страданиях покемонов.');
         setInventory(prev => [...prev, {
           id: 'diary',
@@ -217,7 +217,12 @@ const Index = () => {
           description: 'Исписанный дневник с мрачными мыслями',
           icon: 'BookOpen'
         }]);
-      } else if (obj.id === 'key') {
+        setDiscoveredObjects(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('diary');
+          return newSet;
+        });
+      } else if (obj.id === 'key' && !inventory.find(item => item.id === 'key')) {
         addLog('Ты поднял ржавый ключ. Он холодный, как лёд.');
         setInventory(prev => [...prev, {
           id: 'key',
@@ -225,7 +230,12 @@ const Index = () => {
           description: 'Старый ключ от неизвестной двери',
           icon: 'Key'
         }]);
-      } else if (obj.id === 'crystal') {
+        setDiscoveredObjects(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('key');
+          return newSet;
+        });
+      } else if (obj.id === 'crystal' && !inventory.find(item => item.id === 'crystal')) {
         addLog('Кристалл обжигает руку, но ты забираешь его.');
         setInventory(prev => [...prev, {
           id: 'crystal',
@@ -233,6 +243,11 @@ const Index = () => {
           description: 'Пульсирующий кристалл тёмной энергии',
           icon: 'Gem'
         }]);
+        setDiscoveredObjects(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('crystal');
+          return newSet;
+        });
       }
     } else if (obj.action === 'use') {
       if (obj.id === 'door') {
@@ -299,20 +314,20 @@ const Index = () => {
                     <div
                       key={obj.id}
                       onClick={() => handleObjectClick(obj)}
-                      className="absolute transition-all hover:scale-110 hover:brightness-125 cursor-pointer"
+                      className="absolute transition-all cursor-pointer group"
                       style={{
                         left: `${obj.x}%`,
                         top: `${obj.y}%`,
                         width: `${obj.width}%`,
-                        height: `${obj.height}%`,
-                        border: '2px solid rgba(234, 56, 76, 0.5)',
-                        borderRadius: '8px',
-                        background: 'rgba(234, 56, 76, 0.2)',
-                        backdropFilter: 'blur(1px)',
-                        boxShadow: '0 0 10px rgba(234, 56, 76, 0.4)'
+                        height: `${obj.height}%`
                       }}
                       title={obj.name}
-                    />
+                    >
+                      <div className="absolute inset-0 border-2 border-yellow-400/0 group-hover:border-yellow-400/80 rounded-lg transition-all duration-200 group-hover:shadow-[0_0_15px_rgba(250,204,21,0.6)]" />
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black/90 px-3 py-1 rounded text-xs text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        {obj.name}
+                      </div>
+                    </div>
                   );
                 })}
 
@@ -321,24 +336,27 @@ const Index = () => {
                   style={{
                     left: `${zoruaPosition.x}%`,
                     top: `${zoruaPosition.y}%`,
-                    width: '80px',
-                    height: '80px'
+                    width: '150px',
+                    height: '150px',
+                    zIndex: 10
                   }}
                   onClick={handleZoruaClick}
                 >
                   <img 
                     src="https://cdn.poehali.dev/files/eb7a2be1-38d5-4439-a7e2-fcae72fa531a.png"
                     alt="Zorua"
-                    className="w-full h-full object-contain drop-shadow-lg animate-pulse"
+                    className="w-full h-full object-contain drop-shadow-2xl"
+                    style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }}
                   />
                 </div>
               </div>
 
-              <div className="absolute bottom-4 right-4">
+              <div className="absolute bottom-0 right-8" style={{ zIndex: 10 }}>
                 <img 
                   src="https://cdn.poehali.dev/files/76cb79cf-1086-4e14-af67-74ce1e2d2339.png"
                   alt="N"
-                  className="w-32 h-auto drop-shadow-2xl opacity-80"
+                  className="h-64 w-auto drop-shadow-2xl"
+                  style={{ filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.6))' }}
                 />
               </div>
             </Card>
